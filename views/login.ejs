@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" type="image/x-icon">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-900">
+<header class="bg-white shadow-sm">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <img alt="Trimly logo" class="h-10" src="/logo.png"/>
+            <span class="text-2xl text-blue-600 font-semibold">ShortURL and QR Generator</span>
+        </div>
+        <div class="flex items-center space-x-4">
+            <a class="border border-blue-600 text-blue-600 px-4 py-2 rounded hover:bg-blue-50" href="/login">Log in</a>
+            <a class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" href="/signup">Sign up Free</a>
+        </div>
+    </div>
+</header>
+
+<main class="bg-blue-900 text-white py-16">
+    <div class="container mx-auto px-4">
+        <div class="max-w-md mx-auto bg-white p-8 rounded shadow">
+            <h1 class="text-2xl font-bold mb-4 text-blue-900">Log In</h1>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label class="block text-gray-700" for="email">Email</label>
+                    <input class="w-full border border-gray-300 rounded px-4 py-2 text-gray-700" type="email" id="email" name="email" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700" for="password">Password</label>
+                    <input class="w-full border border-gray-300 rounded px-4 py-2 text-blue-700" type="password" id="password" name="password" required>
+                </div>
+                <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full" type="submit">Log In</button>
+            </form>
+            <div id="message-container" class="mt-4"></div>
+        </div>
+    </div>
+</main>
+
+<footer class="bg-blue-900 text-white py-4">
+    <div class="container mx-auto px-4 text-center">
+        <p>Login to Access your ShortURLs</p>
+    </div>
+</footer>
+
+<script>
+    document.getElementById('login-form').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const messageContainer = document.getElementById('message-container');
+        const form = document.getElementById('login-form');
+
+        try {
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                localStorage.setItem('token', result.token);
+                window.location.href = '/';
+            } else {
+                messageContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-700 rounded">${result.error}</div>`;
+            }
+        } catch (error) {
+            messageContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-700 rounded">An error occurred</div>`;
+        }
+    });
+</script>
+</body>
+</html>

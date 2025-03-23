@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Trimly - ShortURL and QR Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" type="image/x-icon">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-900">
+<header class="bg-white shadow-sm">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <img alt="Trimly logo" class="h-10" src="/logo.png"/>
+            <span class="text-2xl text-blue-600 font-semibold">Trimly - ShortURL and QR Generator</span>
+        </div>
+        <div class="flex items-center space-x-4">
+            <% if (user) { %>
+                <span class="text-blue-600">Welcome, <%= user.username %></span>
+                <a class="border border-blue-600 text-blue-600 px-4 py-2 rounded hover:bg-blue-50" href="#" onclick="logout()">Logout</a>
+            <% } else { %>
+                <a class="border border-blue-600 text-blue-600 px-4 py-2 rounded hover:bg-blue-50" href="/login">Log in</a>
+                <a class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" href="/signup">Sign up Free</a>
+            <% } %>
+        </div>
+    </div>
+</header>
+
+<main class="bg-blue-900 text-white py-16">
+    <div class="container mx-auto px-4">
+        <div class="flex flex-col md:flex-row items-center bg-white text-gray-900 rounded-lg p-8">
+            <div class="md:w-1/2">
+                <div class="flex items-center space-x-4 mb-6">
+                    <a id="short-link-btn" class="flex items-center space-x-2 text-orange-600 cursor-pointer" onclick="toggleMode('short')">
+                        <i class="fas fa-link"></i>
+                        <span>Short link</span>
+                    </a>
+                    <a id="qr-code-btn" class="flex items-center space-x-2 text-gray-900 cursor-pointer" onclick="toggleMode('qr')">
+                        <i class="fas fa-qrcode"></i>
+                        <span>QR Code</span>
+                    </a>
+                </div>
+                <h1 id="form-title" class="text-3xl font-bold mb-2">Create a QR Code</h1>
+                <p class="text-gray-600 mb-6">Login to save ShortURLs</p>
+                <form id="shorten-form">
+                    <label id="input-label" class="block text-gray-700 font-semibold mb-2" for="qr-destination">Enter your QR Code destination</label>
+                    <input id="input-field" name="url" class="w-full border border-gray-300 rounded px-4 py-2 mb-4" placeholder="https://example.com/my-long-url" type="text" required/>
+                    <button id="submit-btn" class="bg-blue-900 text-white px-6 py-3 rounded hover:bg-blue-700 w-full" type="submit">Get your QR Code for free</button>
+                </form>
+                <div id="message-container" class="mt-4"></div>
+            </div>
+
+            <div id="qr-image" class="md:w-1/2 mt-8 md:mt-0 md:ml-8">
+                <img id="qr-code-img" alt="QR Code" class="rounded-lg" src="https://placehold.co/400x300?text=QR+Code+Image"/>
+                <a id="download-qr" href="#" download="qrcode.png" class="hidden mt-4 bg-blue-900 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    <i class="fas fa-download"></i> Download QR Code
+                </a>
+            </div>
+        </div>
+        <% if (user && urls) { %>
+            <div class="mt-8">
+                <h2 class="text-2xl font-bold mb-4">Your Shortened URLs</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="urls-list">
+                    <% urls.forEach(url => { %>
+                        <div class="bg-white p-4 rounded shadow">
+                            <p class="text-gray-700"><strong>Created:</strong> <%= new Date(url.createdAt).toLocaleString() %></p>
+                            <p class="text-gray-700"><strong>Short URL:</strong> 
+                                <a href="/<%= url.shortId %>" target="_blank" class="text-blue-600">/<%= url.shortId %></a>
+                                <button class="ml-2 text-blue-600" onclick="copyToClipboard('/<%= url.shortId %>')">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </p>
+                            <p class="text-gray-700"><strong>Redirect URL:</strong> <a href="<%= url.redirectURL %>" target="_blank" class="text-blue-600"><%= url.redirectURL %></a></p>
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+        <% } %>
+    </div>
+</main>
+
+<footer class="bg-blue-900 text-white py-4">
+    <div class="container mx-auto px-4 text-center">
+        <p>© 2025 Trimly. All rights reserved.</p>
+    </div>
+</footer>
+<script>
+    function toggleMode(mode) {
+        const shortLinkBtn = document.getElementById("short-link-btn");
+        const qrCodeBtn = document.getElementById("qr-code-btn");
+        const inputLabel = document.getElementById("input-label");
+        const submitBtn = document.getElementById("submit-btn");
+        const formTitle = document.getElementById("form-title");
+        const qrImage = document.getElementById("qr-image");
+
+        if (mode === "short") {
+            shortLinkBtn.classList.add("text-orange-600");
+            qrCodeBtn.classList.remove("text-orange-600");
+            qrCodeBtn.classList.add("text-gray-900");
+            inputLabel.textContent = "Enter your Short URL destination";
+            submitBtn.textContent = "Get your Short URL";
+            formTitle.textContent = "Create a Short URL";
+            qrImage.style.display = "none";
+        } else {
+            qrCodeBtn.classList.add("text-orange-600");
+            shortLinkBtn.classList.remove("text-orange-600");
+            shortLinkBtn.classList.add("text-gray-900");
+            inputLabel.textContent = "Enter your QR Code destination";
+            submitBtn.textContent = "Get your QR Code for free";
+            formTitle.textContent = "Create a QR Code";
+            qrImage.style.display = "block";
+        }
+    }
+
+    document.getElementById('shorten-form').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const url = document.getElementById('input-field').value;
+        const messageContainer = document.getElementById('message-container');
+        const form = document.getElementById('shorten-form');
+        const qrImage = document.getElementById('qr-image');
+        const qrCodeImg = document.getElementById('qr-code-img');
+        const downloadQr = document.getElementById('download-qr');
+
+        try {
+            const mode = document.getElementById('short-link-btn').classList.contains('text-orange-600') ? 'short' : 'qr';
+            const endpoint = mode === 'short' ? '/shorten' : '/generate-qrcode';
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                },
+                body: JSON.stringify({ url })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                form.style.display = 'none';
+                if (mode === 'short') {
+                    messageContainer.innerHTML = `<div class="p-4 bg-green-100 text-green-700 rounded">Shortened URL: <a href="/${result.id}" target="_blank">/${result.id}</a></div>`;
+                    // Update the list of URLs if the user is logged in
+                    if (document.getElementById('urls-list')) {
+                        const urlsList = document.getElementById('urls-list');
+                        const newUrlItem = document.createElement('div');
+                        newUrlItem.classList.add('bg-white', 'p-4', 'rounded', 'shadow');
+                        newUrlItem.innerHTML = `
+                            <p class="text-gray-700"><strong>Created:</strong> ${new Date().toLocaleString()}</p>
+                            <p class="text-gray-700"><strong>Short URL:</strong> 
+                                <a href="/${result.id}" target="_blank" class="text-blue-600">/${result.id}</a>
+                                <button class="ml-2 text-blue-600" onclick="copyToClipboard('/${result.id}')">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </p>
+                            <p class="text-gray-700"><strong>Redirect URL:</strong> <a href="${url}" target="_blank" class="text-blue-600">${url}</a></p>
+                        `;
+                        urlsList.appendChild(newUrlItem);
+                    }
+                } else {
+                    qrCodeImg.src = result.qrCodeImage;
+                    qrImage.style.display = 'block';
+                    downloadQr.href = result.qrCodeImage;
+                    downloadQr.classList.remove('hidden');
+                    messageContainer.innerHTML = `<div class="p-4 bg-green-100 text-green-700 rounded">QR Code generated successfully.</div>`;
+                }
+            } else {
+                messageContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-700 rounded">${result.error}</div>`;
+            }
+        } catch (error) {
+            messageContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-700 rounded">An error occurred</div>`;
+        }
+    });
+
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            alert('Copied to clipboard');
+        }).catch(err => {
+            alert('Failed to copy');
+        });
+    }
+
+    async function logout() {
+        try {
+            const response = await fetch('/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                localStorage.removeItem('token');
+                window.location.href = '/';
+            } else {
+                alert('Failed to log out');
+            }
+        } catch (error) {
+            alert('An error occurred');
+        }
+    }
+</script>
+</body>
+</html>
